@@ -12,16 +12,16 @@ ERC-721 metadata, and exposes a holdings stub.
 
 ## Stack
 
-| Layer            | Tooling                                                                |
-| ---------------- | ---------------------------------------------------------------------- |
-| EVM contracts    | Foundry · Solidity 0.8.24 · OpenZeppelin (ERC-721, ERC-2981, Ownable)  |
-| Sui contracts    | Sui Move (2024 edition) · `display` · capability-gated mint            |
-| Frontend         | Next.js 14 (App Router) · React 18 · TypeScript · Tailwind             |
-| EVM wallets      | wagmi v2 · viem v2 · `@rainbow-me/rainbowkit`                          |
-| Sui wallets      | `@mysten/dapp-kit` · `@mysten/sui`                                     |
-| Backend          | Next.js Route Handlers · viem signing (EIP-191)                        |
-| API docs         | Hand-written OpenAPI 3 (`frontend/openapi.yaml`)                       |
-| Tests            | `forge test` · Sui `move test` · Playwright (Chromium)                 |
+| Layer         | Tooling                                                               |
+| ------------- | --------------------------------------------------------------------- |
+| EVM contracts | Foundry · Solidity 0.8.24 · OpenZeppelin (ERC-721, ERC-2981, Ownable) |
+| Sui contracts | Sui Move (2024 edition) · `display` · capability-gated mint           |
+| Frontend      | Next.js 14 (App Router) · React 18 · TypeScript · Tailwind            |
+| EVM wallets   | wagmi v2 · viem v2 · `@rainbow-me/rainbowkit`                         |
+| Sui wallets   | `@mysten/dapp-kit` · `@mysten/sui`                                    |
+| Backend       | Next.js Route Handlers · viem signing (EIP-191)                       |
+| API docs      | Hand-written OpenAPI 3 (`frontend/openapi.yaml`)                      |
+| Tests         | `forge test` · Sui `move test` · Playwright (Chromium)                |
 
 ## Repo layout
 
@@ -46,13 +46,13 @@ frontend/               # Next.js 14 dApp + backend
 
 ## What's verified
 
-| Artifact                                                         | Status                                |
-| ---------------------------------------------------------------- | ------------------------------------- |
-| `forge test` — `contracts-evm/`                                  | **24/24 passing** (incl. fuzz)        |
-| `sui move test` — `contracts-sui/`                               | **5/5 passing**                       |
-| `npm run build` / `npm run lint` — `frontend/`                   | **green**                             |
-| `npx playwright test` — `frontend/`                              | **24/24 passing**                     |
-| `redocly lint openapi.yaml`                                      | **valid** (1 cosmetic warning)        |
+| Artifact                                       | Status                         |
+| ---------------------------------------------- | ------------------------------ |
+| `forge test` — `contracts-evm/`                | **24/24 passing** (incl. fuzz) |
+| `sui move test` — `contracts-sui/`             | **5/5 passing**                |
+| `npm run build` / `npm run lint` — `frontend/` | **green**                      |
+| `npx playwright test` — `frontend/`            | **24/24 passing**              |
+| `redocly lint openapi.yaml`                    | **valid** (1 cosmetic warning) |
 
 ## Quickstart
 
@@ -75,7 +75,7 @@ forge test -vv
 Deploy to Sepolia (or any configured chain):
 
 ```bash
-cp .env.example .env  # set DEPLOYER_PRIVATE_KEY, SEPOLIA_RPC_URL, ETHERSCAN_API_KEY
+cp .env.example .env
 forge script script/Deploy.s.sol --rpc-url sepolia --broadcast --verify
 ```
 
@@ -86,22 +86,21 @@ cd contracts-sui
 sui move build
 sui move test
 sui client publish --gas-budget 100000000
-# Note the package id and the transferred MintCap object id from the output.
 ```
 
 ### 4. Frontend
 
 ```bash
 cd frontend
-cp .env.example .env.local        # fill in addresses + WalletConnect project id
+cp .env.example .env.local
 npm install
-npm run dev                        # http://localhost:3000
+npm run dev
 ```
 
 Run the wallet/signing flow tests:
 
 ```bash
-npm run test:e2e:install            # installs Chromium (one-time)
+npm run test:e2e:install
 npm run test:e2e
 ```
 
@@ -110,11 +109,11 @@ npm run test:e2e
 OpenAPI spec lives at [`frontend/openapi.yaml`](frontend/openapi.yaml). Three
 endpoints, implemented as Next.js Route Handlers:
 
-| Method | Path                              | Purpose                                               |
-| ------ | --------------------------------- | ----------------------------------------------------- |
-| POST   | `/api/sign-mint`                  | EIP-191 mint authorisation — verified on-chain in `mintWithSignature` |
-| GET    | `/api/metadata/{tokenId}`         | ERC-721 metadata JSON for `tokenURI` redirects        |
-| GET    | `/api/nft/{chain}/{address}`      | Holdings stub (wraps Alchemy / Sui RPC in production) |
+| Method | Path                         | Purpose                                                               |
+| ------ | ---------------------------- | --------------------------------------------------------------------- |
+| POST   | `/api/sign-mint`             | EIP-191 mint authorisation — verified on-chain in `mintWithSignature` |
+| GET    | `/api/metadata/{tokenId}`    | ERC-721 metadata JSON for `tokenURI` redirects                        |
+| GET    | `/api/nft/{chain}/{address}` | Holdings stub (wraps Alchemy / Sui RPC in production)                 |
 
 ## Mint flow (EVM)
 
