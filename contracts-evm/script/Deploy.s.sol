@@ -4,9 +4,7 @@ pragma solidity ^0.8.24;
 import {Script, console2} from "forge-std/Script.sol";
 import {MultiChainNFT} from "../src/MultiChainNFT.sol";
 
-/// @notice Deploy the same NFT contract to any configured EVM chain.
-/// @dev Run with:
-///        forge script script/Deploy.s.sol --rpc-url sepolia --broadcast --verify
+/// @notice Deploy MultiChainNFT to any configured EVM chain.
 contract Deploy is Script {
     function run() external returns (MultiChainNFT nft) {
         uint256 pk = vm.envUint("DEPLOYER_PRIVATE_KEY");

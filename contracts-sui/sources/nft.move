@@ -1,8 +1,4 @@
-/// MultiChain NFT — Sui Move side.
-///
-/// Mirrors the EVM ERC-721 in spirit: a named NFT object minted by the holder
-/// of a `MintCap` capability. Sui's object model gives us first-class display,
-/// publisher, and capability primitives, which we use here.
+/// MultiChain NFT — capability-gated NFT module mirroring the EVM ERC-721.
 module multichain_nft::nft;
 
 use std::string::{Self, String};
@@ -10,14 +6,9 @@ use sui::display;
 use sui::event;
 use sui::package;
 
-// ---------- One-time witness ----------
-
 /// One-time witness used at publish time to claim a `Publisher`.
 public struct NFT has drop {}
 
-// ---------- Objects ----------
-
-/// The NFT object itself.
 public struct MultiChainNFT has key, store {
     id: UID,
     name: String,
@@ -31,8 +22,6 @@ public struct MintCap has key, store {
     id: UID,
 }
 
-// ---------- Events ----------
-
 public struct NFTMinted has copy, drop {
     nft_id: ID,
     recipient: address,
@@ -45,14 +34,8 @@ public struct NFTBurned has copy, drop {
     burner: address,
 }
 
-// ---------- Errors ----------
-
 const ENotCreator: u64 = 1;
 
-// ---------- Init ----------
-
-/// Runs once at package publish. Sets up `Display` and transfers the
-/// `Publisher` and `MintCap` to the publisher.
 fun init(otw: NFT, ctx: &mut TxContext) {
     let publisher = package::claim(otw, ctx);
 
@@ -77,8 +60,6 @@ fun init(otw: NFT, ctx: &mut TxContext) {
     transfer::public_transfer(display, sender);
     transfer::public_transfer(MintCap { id: object::new(ctx) }, sender);
 }
-
-// ---------- Public API ----------
 
 /// Mint a new NFT and transfer it to `recipient`. Caller must hold a `MintCap`.
 public fun mint(
@@ -106,7 +87,6 @@ public fun mint(
     transfer::public_transfer(nft, recipient);
 }
 
-/// Self-mint convenience for demo: caller mints for themselves.
 public fun mint_to_sender(
     cap: &MintCap,
     name: vector<u8>,
@@ -126,14 +106,10 @@ public fun burn(nft: MultiChainNFT, ctx: &TxContext) {
     object::delete(id);
 }
 
-// ---------- Read-only accessors ----------
-
 public fun name(nft: &MultiChainNFT): &String { &nft.name }
 public fun description(nft: &MultiChainNFT): &String { &nft.description }
 public fun image_url(nft: &MultiChainNFT): &String { &nft.image_url }
 public fun creator(nft: &MultiChainNFT): address { nft.creator }
-
-// ---------- Test helpers ----------
 
 #[test_only]
 public fun test_only_new_cap(ctx: &mut TxContext): MintCap {

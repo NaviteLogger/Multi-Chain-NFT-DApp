@@ -17,8 +17,11 @@ contract MultiChainNFT is ERC721URIStorage, ERC2981, Ownable {
     error InvalidSignature();
     error SignatureAlreadyUsed();
     error MintClosed();
+    error EmptyUri();
 
     event Minted(address indexed to, uint256 indexed tokenId, string uri);
+    event MintSignerChanged(address indexed previous, address indexed current);
+    event MintOpenChanged(bool open);
 
     uint256 public nextTokenId;
     address public mintSigner;
@@ -35,15 +38,19 @@ contract MultiChainNFT is ERC721URIStorage, ERC2981, Ownable {
     ) ERC721(name_, symbol_) Ownable(owner_) {
         mintSigner = signer_;
         mintOpen = true;
+        emit MintSignerChanged(address(0), signer_);
+        emit MintOpenChanged(true);
         _setDefaultRoyalty(owner_, royaltyBps);
     }
 
     function setMintSigner(address signer_) external onlyOwner {
+        emit MintSignerChanged(mintSigner, signer_);
         mintSigner = signer_;
     }
 
     function setMintOpen(bool open_) external onlyOwner {
         mintOpen = open_;
+        emit MintOpenChanged(open_);
     }
 
     /// @notice Owner mint — primarily for tests and admin actions.
@@ -52,14 +59,16 @@ contract MultiChainNFT is ERC721URIStorage, ERC2981, Ownable {
     }
 
     /// @notice Public mint authorised by an off-chain signature from `mintSigner`.
-    /// @dev Backend signs keccak256(abi.encodePacked(to, uri, chainId, address(this))) as
-    ///      an Ethereum signed message; signature is single-use.
+    /// @dev Backend signs `keccak256(abi.encodePacked(to, uri, chainId, address(this)))` as
+    ///      an Ethereum signed message. The digest binds chain, contract, recipient, and URI;
+    ///      reuse is prevented by `usedDigests`.
     function mintWithSignature(
         address to,
         string calldata uri,
         bytes calldata signature
     ) external returns (uint256 tokenId) {
         if (!mintOpen) revert MintClosed();
+        if (bytes(uri).length == 0) revert EmptyUri();
 
         bytes32 digest = keccak256(abi.encodePacked(to, uri, block.chainid, address(this)))
             .toEthSignedMessageHash();

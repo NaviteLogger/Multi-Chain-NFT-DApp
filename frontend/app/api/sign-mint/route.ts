@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {keccak256, encodePacked, isAddress, isHex, type Hex} from "viem";
+import {keccak256, encodePacked, isAddress, isHex, getAddress, type Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 
 interface SignBody {
@@ -9,7 +9,13 @@ interface SignBody {
     contract: `0x${string}`;
 }
 
-const ALLOWED_CHAINS = new Set([11155111, 84532, 80002]);
+const ALLOWED_CONTRACT_BY_CHAIN: Record<number, string | undefined> = {
+    11155111: process.env.NEXT_PUBLIC_NFT_ADDRESS_SEPOLIA,
+    84532: process.env.NEXT_PUBLIC_NFT_ADDRESS_BASE_SEPOLIA,
+    80002: process.env.NEXT_PUBLIC_NFT_ADDRESS_POLYGON_AMOY,
+};
+
+const MAX_URI_LENGTH = 512;
 
 function badRequest(message: string) {
     return NextResponse.json({error: message}, {status: 400});
@@ -27,11 +33,22 @@ export async function POST(request: Request) {
 
     if (!to || !isAddress(to)) return badRequest("invalid 'to' address");
     if (!contract || !isAddress(contract)) return badRequest("invalid 'contract' address");
-    if (typeof uri !== "string" || uri.length === 0 || uri.length > 512) {
+    if (typeof uri !== "string" || uri.length === 0 || uri.length > MAX_URI_LENGTH) {
         return badRequest("invalid 'uri'");
     }
-    if (typeof chainId !== "number" || !ALLOWED_CHAINS.has(chainId)) {
+    if (typeof chainId !== "number" || !(chainId in ALLOWED_CONTRACT_BY_CHAIN)) {
         return badRequest("unsupported 'chainId'");
+    }
+
+    const expectedContract = ALLOWED_CONTRACT_BY_CHAIN[chainId];
+    if (!expectedContract || !isAddress(expectedContract)) {
+        return NextResponse.json(
+            {error: `no NFT contract configured for chainId ${chainId}`},
+            {status: 503},
+        );
+    }
+    if (getAddress(contract) !== getAddress(expectedContract)) {
+        return badRequest("'contract' does not match deployed address for this chain");
     }
 
     const pk = process.env.MINT_SIGNER_PRIVATE_KEY;

@@ -1,9 +1,5 @@
 import {sepolia, baseSepolia, polygonAmoy} from "wagmi/chains";
 
-/**
- * MultiChainNFT ABI — only the functions the dApp calls.
- * Hand-curated to keep the bundle small.
- */
 export const multiChainNftAbi = [
     {
         type: "function",

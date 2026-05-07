@@ -48,10 +48,10 @@ frontend/               # Next.js 14 dApp + backend
 
 | Artifact                                                         | Status                                |
 | ---------------------------------------------------------------- | ------------------------------------- |
-| `forge test` — `contracts-evm/`                                  | **11/11 passing**                     |
-| `sui move test` — `contracts-sui/`                               | **1/1 passing**                       |
-| `npm run build` — `frontend/`                                    | **green**                             |
-| `npx playwright test` — `frontend/`                              | **5/5 passing**                       |
+| `forge test` — `contracts-evm/`                                  | **24/24 passing** (incl. fuzz)        |
+| `sui move test` — `contracts-sui/`                               | **5/5 passing**                       |
+| `npm run build` / `npm run lint` — `frontend/`                   | **green**                             |
+| `npx playwright test` — `frontend/`                              | **24/24 passing**                     |
 | `redocly lint openapi.yaml`                                      | **valid** (1 cosmetic warning)        |
 
 ## Quickstart
