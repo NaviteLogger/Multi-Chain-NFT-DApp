@@ -1,0 +1,39 @@
+# Workspace artifacts
+.devcontainer/
+*.log
+
+# Node
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env.*.local
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+*.tsbuildinfo
+
+# Foundry
+contracts-evm/out/
+contracts-evm/cache/
+contracts-evm/broadcast/
+contracts-evm/.env
+
+# Sui Move
+contracts-sui/build/
+contracts-sui/.env
+.sui/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

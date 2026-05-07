@@ -1,0 +1,15 @@
+[package]
+name = "multichain_nft"
+edition = "2024.beta"
+version = "0.0.1"
+license = "MIT"
+authors = ["MultiChain NFT Demo"]
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+
+[addresses]
+multichain_nft = "0x0"
+
+[dev-addresses]
+multichain_nft = "0x0"

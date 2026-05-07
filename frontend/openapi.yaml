@@ -1,0 +1,242 @@
+openapi: 3.0.3
+info:
+  title: MultiChain NFT Backend
+  version: 0.1.0
+  description: |
+    Backend API for the MultiChain NFT dApp. Implemented as Next.js Route Handlers
+    under `/app/api`. Three endpoints:
+
+    1. `POST /api/sign-mint` — server signs a mint authorisation that the EVM
+       contract verifies in `mintWithSignature`.
+    2. `GET /api/metadata/{tokenId}` — returns OpenSea-style ERC-721 metadata JSON
+       suitable for `tokenURI` redirects.
+    3. `GET /api/nft/{chain}/{address}` — stubbed holdings query; in production it
+       wraps an indexer (Alchemy / QuickNode for EVM, Sui RPC `getOwnedObjects`
+       for Sui).
+
+    The same spec covers EVM (Sepolia / Base Sepolia / Polygon Amoy) and Sui
+    (testnet) — the `chain` path parameter routes the lookup.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:3000
+    description: Local dev
+
+security: []
+
+paths:
+  /api/sign-mint:
+    post:
+      summary: Issue an EIP-191 mint signature
+      description: |
+        Returns a signature over `keccak256(abi.encodePacked(to, uri, chainId, contract))`
+        wrapped as an Ethereum signed message. The EVM contract enforces that the
+        recovered address matches its `mintSigner` and that the digest has not been
+        used before.
+      operationId: signMint
+      tags: [mint]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignMintRequest"
+            examples:
+              sepolia:
+                value:
+                  to: "0xAbC0000000000000000000000000000000000001"
+                  uri: "ipfs://QmExampleCID/0.json"
+                  chainId: 11155111
+                  contract: "0x0000000000000000000000000000000000000123"
+      responses:
+        "200":
+          description: Signature issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignMintResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: Server signer is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/metadata/{tokenId}:
+    get:
+      summary: ERC-721 metadata for a token
+      operationId: getMetadata
+      tags: [metadata]
+      parameters:
+        - name: tokenId
+          in: path
+          required: true
+          description: Non-negative integer token id
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erc721Metadata"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/nft/{chain}/{address}:
+    get:
+      summary: Owned NFTs for a wallet
+      operationId: listHoldings
+      tags: [holdings]
+      parameters:
+        - name: chain
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [sepolia, base-sepolia, polygon-amoy, sui-testnet]
+        - name: address
+          in: path
+          required: true
+          description: EVM address (`0x` + 40 hex) or Sui address (`0x` + 1-64 hex).
+          schema:
+            type: string
+            pattern: "^0x[0-9a-fA-F]+$"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HoldingsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Address:
+      type: string
+      pattern: "^0x[a-fA-F0-9]{40}$"
+      example: "0xAbC0000000000000000000000000000000000001"
+
+    HexBytes:
+      type: string
+      pattern: "^0x[a-fA-F0-9]+$"
+
+    Bytes32:
+      type: string
+      pattern: "^0x[a-fA-F0-9]{64}$"
+
+    SignMintRequest:
+      type: object
+      required: [to, uri, chainId, contract]
+      additionalProperties: false
+      properties:
+        to:
+          $ref: "#/components/schemas/Address"
+        uri:
+          type: string
+          minLength: 1
+          maxLength: 512
+          example: "ipfs://QmExampleCID/0.json"
+        chainId:
+          type: integer
+          enum: [11155111, 84532, 80002]
+        contract:
+          $ref: "#/components/schemas/Address"
+
+    SignMintResponse:
+      type: object
+      required: [signer, digest, signature]
+      properties:
+        signer:
+          $ref: "#/components/schemas/Address"
+        digest:
+          $ref: "#/components/schemas/Bytes32"
+        signature:
+          $ref: "#/components/schemas/HexBytes"
+          description: 65-byte ECDSA signature (r || s || v).
+
+    Erc721Metadata:
+      type: object
+      required: [name, description, image]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+          format: uri
+        external_url:
+          type: string
+          format: uri
+        attributes:
+          type: array
+          items:
+            type: object
+            required: [trait_type, value]
+            properties:
+              trait_type:
+                type: string
+              value:
+                oneOf:
+                  - {type: string}
+                  - {type: number}
+
+    HoldingsResponse:
+      type: object
+      required: [chain, address, items]
+      properties:
+        chain:
+          type: string
+        address:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/HoldingItem"
+        nextCursor:
+          type: string
+          nullable: true
+
+    HoldingItem:
+      type: object
+      required: [tokenId, tokenUri]
+      properties:
+        tokenId:
+          type: string
+        tokenUri:
+          type: string
+        contract:
+          type: string
+        chain:
+          type: string
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+tags:
+  - name: mint
+    description: Mint authorisation flow
+  - name: metadata
+    description: ERC-721 metadata serving
+  - name: holdings
+    description: Wallet holdings lookup
