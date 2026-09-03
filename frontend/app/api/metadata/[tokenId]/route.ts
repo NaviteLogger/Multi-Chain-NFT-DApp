@@ -1,13 +1,13 @@
 import {NextResponse} from "next/server";
 
 interface Params {
-    params: {tokenId: string};
+    params: Promise<{tokenId: string}>;
 }
 
 const TOKEN_ID_PATTERN = /^(0|[1-9][0-9]{0,77})$/;
 
 export async function GET(_request: Request, {params}: Params) {
-    const {tokenId} = params;
+    const {tokenId} = await params;
     if (!TOKEN_ID_PATTERN.test(tokenId)) {
         return NextResponse.json({error: "invalid tokenId"}, {status: 400});
     }
